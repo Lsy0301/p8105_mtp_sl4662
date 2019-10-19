@@ -43,15 +43,18 @@ age_female =
   mtp_data %>% 
   filter(sex == "0") %>% 
   group_by(age_group) %>% 
-  summarize(female = n())
+  summarize(female_number = n())
 
 age_male = 
   mtp_data %>% 
   filter(sex == "1") %>% 
   group_by(age_group) %>% 
-  summarize(male = n())
+  summarize(male_number = n())
 
 left_join(age_female, age_male, by = "age_group") %>% 
+  mutate(age = c("10+", "20+", "30+", "40+", "50+", "60+", "70+", "80+")) %>% 
+  select(-age_group) %>% 
+  select(age, everything()) %>% 
   knitr::kable()
 ```
 
