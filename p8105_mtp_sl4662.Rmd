@@ -9,10 +9,13 @@ editor_options:
 Some age group does not match the age. Age group 1 is not suppose to appear, and there is an age 45, with age group 1. 
 
 ```{r setup, include=FALSE}
+devtools::install_github("thomasp85/patchwork")
 library(tidyverse)
+library(ggplot2)
 library(rvest)
 library(httr)
 library(readxl)
+library(patchwork)
 knitr::opts_chunk$set(
 	echo = TRUE,
 	warning = FALSE,
@@ -36,6 +39,7 @@ mtp_data =
   janitor::clean_names() %>% 
   mutate(
     eop_size_mm = replace(eop_size_mm, is.na(eop_size_mm), "0"), 
+    eop_size_mm = as.double(eop_size_mm), 
     sex = factor(sex, levels = c("1", "0")), 
     sex = fct_recode(sex, female = "0", male = "1"), 
     age_group = factor(age_group, levels = c("1", "2", "3", "4", "5", "6", "7", "8")),  
@@ -114,8 +118,8 @@ mtp_data %>%
 ```
 
 # Problem 2
-reorder(fhp_size_mm, age)  coord_flip()+ 
 ```{r}
+fhp_p = 
 ggplot(data = mtp_data, aes(x = age, y = fhp_size_mm, color = sex)) + 
   geom_point(aes(group = sex), alpha = .5) + 
   geom_smooth() +
@@ -125,20 +129,32 @@ ggplot(data = mtp_data, aes(x = age, y = fhp_size_mm, color = sex)) +
     x = "Age",
     y = "FHP size (mm)")
 
-mtp_data %>% 
-  filter()
+gender_total = 
+  mtp_data %>% 
+  group_by(sex, age_group) %>% 
+  summarise(Total = n()) %>% 
+  filter(!(age_group == "1"))
+  
 
+enlarge = 
+  mtp_data %>% 
+  filter(eop_size_mm >= 10) %>% 
+  group_by(sex, age_group) %>% 
+  summarise(enlarge = n()) 
 
-ggplot(data = mtp_data, aes(x = fhp_size_mm, y = age, color = sex)) + 
-  geom_point(aes(group = sex), alpha = .5) + geom_smooth()
-coord_flip() + geom_smooth()
-  geom_text(aes(label = locationabbr),
-            size = 2) +
-  theme(legend.position = "right") +
+gender_enlarge = 
+  left_join(gender_total, enlarge, by = c("age_group","sex")) %>% 
+  mutate(enlarge_rate = (enlarge / Total))
+
+enlarge_rate_p = 
+ggplot(data = gender_enlarge, aes(x = age_group, y = enlarge_rate, color = sex)) + 
+  geom_line(aes(group = sex), alpha = .5) + 
   labs(
-    color = "Location",
-    title = "Excellent Responses Data Value over Time",
-    x = "Year",
-    y = "Average Data Value")
+    color = "Gender",
+    title = "rate of enlarged EOP vs Age Groups",
+    x = "Age Groups",
+    y = "Rate of Enlarged EOP")
+
+(fhp_p + enlarge_rate_p)
 ```
 
