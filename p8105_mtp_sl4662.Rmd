@@ -57,7 +57,7 @@ mtp_data =
                           "5-10" = "1", 
                           "10-15" = "2", 
                           "15-20" = "3", 
-                          "10-25" = "4", 
+                          "20-25" = "4", 
                           "25+" = "5"), 
     eop_visibility_classification = factor(eop_visibility_classification, levels = c("0", "1", "2")), 
     eop_visibility_classification = fct_recode(eop_visibility_classification, 
@@ -100,6 +100,107 @@ This dataset is consist of many different variables, and some variables have con
 Key variables include :
 
 There are `r ncol(mtp_data)` variables and `r nrow(mtp_data)` observations in this data set. There is a total of `r nrow(mtp_data)` participants. 
+
+
+age = 
+  mtp_data %>% 
+  mutate(
+    age = case_when(
+      age < 18  ~ "<18",
+      age > 17 & age < 31  ~ "18-30",
+      age > 30 & age < 41  ~ "31-40",
+      age > 40 & age < 51  ~ "41-50",
+      age > 50 & age < 61  ~ "51-60",
+      age > 60 ~ ">60",
+      TRUE     ~ ""
+  )) %>% 
+  janitor::tabyl(sex, age) %>% 
+  select("sex", "<18", "18-30","31-40","41-50","51-60",">60")
+
+age_cat = 
+  mtp_data %>% 
+  mutate(
+    age_cat = case_when(
+      age_group == "1"  ~ "<18",
+      age_group == "18-30"  ~ "18-30",
+      age_group == "31-40"  ~ "31-40",
+      age_group == "41-50"  ~ "41-50",
+      age_group == "51-60"  ~ "51-60",
+      age_group == "60+" ~ ">60",
+    TRUE     ~ ""
+  )) %>% 
+  janitor::tabyl(sex, age_cat) %>% 
+  select("sex", "<18", "18-30","31-40","41-50","51-60",">60")
+
+aa = 
+  bind_rows(age_cat, age) %>% 
+  pivot_longer(
+    names_to = female, 
+              values_from = )
+
+eop = 
+  mtp_data %>% 
+  mutate(
+    eop = case_when(
+      "eop_size mm" < 18  ~ "<18",
+      age > 17 & age < 31  ~ "18-30",
+      age > 30 & age < 41  ~ "31-40",
+      age > 40 & age < 51  ~ "41-50",
+      age > 50 & age < 61  ~ "51-60",
+      age > 60 ~ ">60",
+    TRUE     ~ ""
+  )) %>% 
+  janitor::tabyl(sex, age_cat) 
+
+
+
+```{r, fig.height=11}
+eop1 = 
+mtp_data %>%
+  ggplot(aes(x = eop_size, y = eop_size_mm, color = sex)) + 
+    geom_point(alpha = 0.8) + 
+    labs(
+    color = "Gender",
+    title = "EOP Size (mm) vs EOP Size Category",
+    x = "Category in Chart",
+    y = "Continuous EOP size (mm)") +
+  theme(axis.text.x = element_text(angle = 45))
+eop2 = 
+mtp_data %>%
+  ggplot(aes(x = eop_visibility_classification, y = eop_size_mm, color = sex)) + 
+    geom_point(alpha = 0.8) + 
+    labs(
+    color = "Gender",
+    title = "EOP Size (mm) vs Visibility Classification",
+    x = "Category in Chart",
+    y = "Continuous EOP size (mm)") +
+  theme(axis.text.x = element_text(angle = 45))
+
+fhp = 
+mtp_data %>%
+  ggplot(aes(x = fhp_category, y = fhp_size_mm, color = sex)) + 
+    geom_point(alpha = 0.8) + 
+    labs(
+    color = "Gender",
+    title = "FHP Size (mm) vs FHP Category",
+    x = "FHP Category",
+    y = "Continuous FHP size (mm)") +
+  theme(axis.text.x = element_text(angle = 45))
+
+age = 
+mtp_data %>%
+  ggplot(aes(x = age_group, y = age, color = sex)) + 
+    geom_point(alpha = 0.8) + 
+    labs(
+    color = "Gender",
+    title = "Age vs Age Group Category",
+    x = "Age Group Category",
+    y = "Age") +
+  theme(axis.text.x = element_text(angle = 45))
+  
+(age + fhp) / (eop1 + eop2)
+```
+
 
 ```{r}
 age_based = 
