@@ -319,6 +319,6 @@ over_six =
 
 From the data set given, FHP >40 mm observed frequently in the over 60s cases is `r (fhp_percent / over_six) * 100`%, while author got 34.5%. They are similar (not consistent). Also, according to Fig. 5, FHP size goes up as age increases. 
 
-# Discussion
+## Discussion
 
 Based on the given data set, some of the results are inconsistent with author’s results due to misplacement of continuous observations into wrong groups. Solely based on the data, I cannot conclude that there is causal relationship between cell phone and “horn” growth. I think it would be more helpful to look at EPO size from of people use cell phone and people who do not. 
