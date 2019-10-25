@@ -8,11 +8,8 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-devtools::install_github("thomasp85/patchwork")
 library(tidyverse)
 library(ggplot2)
-library(rvest)
-library(httr)
 library(readxl)
 library(patchwork)
 knitr::opts_chunk$set(
@@ -31,15 +28,18 @@ scale_fill_discrete = scale_fill_viridis_d
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
 
+## Introduction 
+From previous studies, it is known that development of prominent exostosis young adults’ skulls emanating from external occipital protuberance (EOP). This report is to study wheather the degree of forward head protraction (FHP), sex and age can predict the presence of enlarged EOP (EEOP).
+
 ## Results
 
 ### Loading and tidying data
 
-Firs step is to put categorical and continuous variables in appropriate types and fill in missing values. 
+First step is to put categorical and continuous variables in appropriate types and fill in missing values. 
 
 ```{r}
 mtp_data = 
-  read_excel("p8105_mtp_data.xlsx", 
+  read_excel("./data/p8105_mtp_data.xlsx", 
              skip = 8) %>% 
   janitor::clean_names() %>% 
   mutate(
@@ -83,11 +83,12 @@ mtp_data =
 
 ```
 
-This dataset is consist of many different variables, and some variables have conclusive variables following them to classify the results into different groups. 
 
 Key variables include `age`, `sex`, `eop_size_mm`, `fhp_size_mm`. 
 
-There are `r ncol(mtp_data)` variables and `r nrow(mtp_data)` observations in this data set. There are a total of `r nrow(mtp_data)` participants. 
+There are `r ncol(mtp_data)` variables and `r nrow(mtp_data)` observations in this dataset. 
+
+After tidying, there are `r nrow(mtp_data)` participants. 
 
 ### Age and Gender Distribution
 
@@ -110,7 +111,8 @@ age_table =
 knitr::kable(age_table)
 ```
 
-It shows that there are more participants in `age_group` 18-30 and 60+. Two participants are included in `age_group` 1 by mistake. 
+Number of participants in each group is evenly distrubutted. 
+
 
 ### Issues in Avilable Data
 
@@ -163,11 +165,11 @@ mtp_data %>%
 (age + fhp) / (eop1 + eop2)
 ```
 
-In Fig.1, there are two observations that're categorized in the wrong age group. Since we have over one thousand observation in this data set, the small error in age group would not make a huge impact on the overall statistics. 
+In Fig.1, there are two observations that're categorized in the wrong age group. Such small error in age group would not make an impact on the overall statistics. 
 
-In Fig.2 and Fig. 3, multiple observations, mostly males, are placed in the wrong group, which may have an impact on the overall statistics involving EOP size (10-25mm) and FHP size (40-50mm) about males. 
+In Fig.2 and Fig. 3, multiple observations, mostly males, in groups EOP size (10-25mm) and FHP size (40-50mm) are misplaced. 
 
-In Fig.4, there is major mistakes in EOP size 0 mm and EOP size 0-5 mm group, because most observations in these two groups are misplaced, and making conlusion based on these two groups will give wrong results. In addition, a samll portion of EOP Size >= 5mm does not belone in that group, which shouldn't have a big impact. 
+In Fig.4, most observations in these two groups are misplaced and making conclusion based on in EOP size 0 mm and EOP size 0-5 mm group will give wrong results. 
 
 ## Replot Fig.3, 4 From Origanal Paper
 
@@ -211,9 +213,9 @@ ggplot(data = gender_enlarge, aes(x = age_group, y = enlarge_rate, color = sex))
 (fhp_p + enlarge_rate_p)
 ```
 
-From Fig. 5, we can tell that average FHP size of male is always larger than female's. As age goes up, FHP size grows exponentially, so there is an exponential relationship between age and FHP size. In addition, the difference of average and standard deviation both increase as age increase.
+From Fig. 5, we can tell that average FHP size of male is always larger than female's. As age goes up, FHP size grows exponentially. In addition, the difference between average and standard deviation both increase as age increases.
 
-From Fig. 6, we know that rate of enlarged EOP among male is always around 30% higher than female. Generally, rate is highest among 18-30 age group, and lowest among 41-50 age group. 
+From Fig. 6, we know that rate of enlarged EOP among male is always around 30% higher than female. Generally, rate is highest among 18-30 age group. 
 
 
 ## Effect of FHP Size, Age, and Sex on EOP size
@@ -225,7 +227,7 @@ female =
 female_plot = 
   ggplot(data = female, aes(x = eop_size_mm, y = fhp_size_mm, color = age_group)) + 
   geom_point(alpha = .5) +
-  geom_smooth() +
+  geom_smooth(se = FALSE, method = lm) +
   facet_grid(. ~ age_group) + 
   theme(legend.position = "none") +
   labs(
@@ -244,7 +246,7 @@ male =
 male_plot = 
   ggplot(data = male, aes(x = eop_size_mm, y = fhp_size_mm, color = age_group)) + 
   geom_point(alpha = .5) +
-  geom_smooth() +
+  geom_smooth(se = FALSE, method = lm) +
   facet_grid(. ~ age_group) + 
   labs(
     color = "Age Group",
@@ -257,12 +259,7 @@ male_plot =
 female_plot / male_plot
 ```
 
-In age group 18-30 males and 60+ , the trend is going upwords, showing a positive correlation between the FHP size and EOP size.
-
-In age group 18-30 females, 31-40, 41-50 males and 51-60, the trend is slightly going downwords, which shows that there is negative correlation between FHP and EOP size. 
-
-
-Overall, male group showed a larger trend (stronger correlation) between FHP size and EOP size. 
+There is positive correlation among all age and sex groups. 
 
 ## Comparing results 
 
@@ -271,60 +268,57 @@ Overall, male group showed a larger trend (stronger correlation) between FHP siz
 ```{r}
 age_table = 
   age_table %>% 
-  mutate(total = female_number + male_number)
+  mutate(total = female_number + male_number) %>% 
+  select(age_group, total)
+
 knitr::kable(age_table)
 ```
 
-There are two participants misplaced in age group 1. One is below 18, and the other one is 47. So we discard the one with age 17, and add one to group 41-50.
-
-From the data set given, numbers of participants in each age group was:18–30 n=303, 31–40 n=204, 41–50 n=208, 51–60 n=200, >60 n=305. Only age group 51-60 has consistent number with the author’s stated sample size. Other groups have 3 to 8 more people compare to author's number. 
+From the data set given, numbers of participants in each age group doesn't have consistent numbers with the author’s stated sample size. 
 
 ### FHP Size Data
 
 ```{r}
 mtp_data %>% 
-drop_na(fhp_size_mm) %>% 
-group_by(sex) %>% 
-summarise(mean = mean(fhp_size_mm), sd = sd(fhp_size_mm))
+  drop_na(fhp_size_mm) %>% 
+  group_by(sex) %>% 
+  summarise(mean = mean(fhp_size_mm), sd = sd(fhp_size_mm)) %>% 
+  knitr::kable()
 ```
 
-When not replacing the missing value with 0, the mean and standard deviation FHP in the male cases examined is 28.5 ± 14.7, while that for the female cases was 23.6 ± 10.6 mm, which is consistant with author's calculation if we round the numbers. 
+When not replacing the missing value with 0, above data is consistent with author's calculation if we round the numbers. 
 
 ### Prevalence of EEOP
 
 ```{r}
 eeop = 
   mtp_data %>%
-  filter(eop_size_mm > "10") %>% 
+  filter(eop_size_mm > 10) %>% 
   nrow()
 
-eeop / (nrow(mtp_data) - 1) * 100
+eeop / (nrow(mtp_data)) * 100
 ```
 
-EEOP is the ones with EOP exceeded 10mm in size. I used `eop_size_mm` to calculate prevalence of EEOP to be `r eeop / (nrow(mtp_data) - 1) * 100`% of the study population. This is very differnt from author's data. 
+EEOP is the ones with EOP exceeded 10mm in size. I used `eop_size_mm` to calculate prevalence of EEOP to be `r eeop / (nrow(mtp_data) - 1) * 100`% of the study population. They are similar (not consistent).
 
 ### FHP Among 60+ Age Group
 
 ```{r}
 fhp_percent = 
 mtp_data %>%
-  filter(age > "60" & fhp_size_mm > "40") %>% 
+  filter(age > 60 & fhp_size_mm > 40) %>% 
   nrow()
 
 over_six = 
   mtp_data %>%
-  filter(age > "60") %>% 
+  filter(age > 60) %>% 
   nrow()
 
 (fhp_percent / over_six) * 100
 ```
 
-From the data set given, FHP >40 mm observed frequently in the over 60s cases is `r (fhp_percent / over_six) * 100`%, while author got 34.5%. They are consistent. Also, according to Fig. 5, FHP size goes up as age increases. 
+From the data set given, FHP >40 mm observed frequently in the over 60s cases is `r (fhp_percent / over_six) * 100`%, while author got 34.5%. They are similar (not consistent). Also, according to Fig. 5, FHP size goes up as age increases. 
 
 # Discussion
 
 Based on the given data set, some of the results are inconsistent with author’s results due to misplacement of continuous observations into wrong groups. Solely based on the data, I cannot conclude that there is causal relationship between cell phone and “horn” growth. I think it would be more helpful to look at EPO size from of people use cell phone and people who do not. 
-
-
-
-
