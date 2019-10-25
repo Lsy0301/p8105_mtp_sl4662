@@ -1,12 +1,11 @@
 ---
 title: "p8105_mtp_sl4662"
+author: "Siying Li" 
+date: "10/25/2019"
 output: github_document
 editor_options: 
   chunk_output_type: console
 ---
-# Problem 1
-
-Some age group does not match the age. Age group 1 is not suppose to appear, and there is an age 45, with age group 1. 
 
 ```{r setup, include=FALSE}
 devtools::install_github("thomasp85/patchwork")
@@ -31,6 +30,12 @@ scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
+
+## Results
+
+### Loading and tidying data
+
+Firs step is to put categorical and continuous variables in appropriate types and fill in missing values. 
 
 ```{r}
 mtp_data = 
@@ -76,9 +81,17 @@ mtp_data =
                               "70-80" = "7")
     )
 
-  
-# levels(mtp_data$age_group) = c("1", "20+", "30+", "40+", "50+", "60+", "60+", "60+")
+```
 
+This dataset is consist of many different variables, and some variables have conclusive variables following them to classify the results into different groups. 
+
+Key variables include `age`, `sex`, `eop_size_mm`, `fhp_size_mm`. 
+
+There are `r ncol(mtp_data)` variables and `r nrow(mtp_data)` observations in this data set. There are a total of `r nrow(mtp_data)` participants. 
+
+### Age and Gender Distribution
+
+```{r}
 age_female = 
   mtp_data %>% 
   filter(sex == "female") %>% 
@@ -97,12 +110,9 @@ age_table =
 knitr::kable(age_table)
 ```
 
-This dataset is consist of many different variables, and some variables have conclusive variables following them to classify the results into different groups. 
+It shows that there are more participants in `age_group` 18-30 and 60+. Two participants are included in `age_group` 1 by mistake. 
 
-Key variables include `age`, `sex`, `eop_size_mm`, `fhp_size_mm`. 
-
-There are `r ncol(mtp_data)` variables and `r nrow(mtp_data)` observations in this data set. There is a total of `r nrow(mtp_data)` participants. 
-
+### Issues in Avilable Data
 
 ```{r, fig.height=11}
 eop1 = 
@@ -159,25 +169,8 @@ In Fig.2 and Fig. 3, multiple observations, mostly males, are placed in the wron
 
 In Fig.4, there is major mistakes in EOP size 0 mm and EOP size 0-5 mm group, because most observations in these two groups are misplaced, and making conlusion based on these two groups will give wrong results. In addition, a samll portion of EOP Size >= 5mm does not belone in that group, which shouldn't have a big impact. 
 
+## Replot Fig.3, 4 From Origanal Paper
 
-
-```{r}
-age_based = 
-  mtp_data %>% 
-  filter(sex == "female") %>% 
-  count(age) %>% 
-  group_by(age > "17" & age < "31", age > "30" & age < "41") %>% 
-  summarise(sum = sum(n))
-
-mtp_data %>% 
-  filter(sex == "male") %>% 
-  count(age)
-
-mtp_data %>% 
-  count(age)
-```
-
-# Problem 2
 ```{r}
 fhp_p = 
 ggplot(data = mtp_data, aes(x = age, y = fhp_size_mm, color = sex)) + 
@@ -222,6 +215,8 @@ From Fig. 5, we can tell that average FHP size of male is always larger than fem
 
 From Fig. 6, we know that rate of enlarged EOP among male is always around 30% higher than female. Generally, rate is highest among 18-30 age group, and lowest among 41-50 age group. 
 
+
+## Effect of FHP Size, Age, and Sex on EOP size
 ```{r}
 female = 
   mtp_data %>% 
@@ -262,8 +257,6 @@ male_plot =
 female_plot / male_plot
 ```
 
-From fig. 7, we see trends about how FHP size, age, and sex affect EOP size. 
-
 In age group 18-30 males and 60+ , the trend is going upwords, showing a positive correlation between the FHP size and EOP size.
 
 In age group 18-30 females, 31-40, 41-50 males and 51-60, the trend is slightly going downwords, which shows that there is negative correlation between FHP and EOP size. 
@@ -271,7 +264,10 @@ In age group 18-30 females, 31-40, 41-50 males and 51-60, the trend is slightly 
 
 Overall, male group showed a larger trend (stronger correlation) between FHP size and EOP size. 
 
-# Problem 3
+## Comparing results 
+
+### Sample Sizes in Each Age Group
+
 ```{r}
 age_table = 
   age_table %>% 
@@ -283,6 +279,8 @@ There are two participants misplaced in age group 1. One is below 18, and the ot
 
 From the data set given, numbers of participants in each age group was:18–30 n=303, 31–40 n=204, 41–50 n=208, 51–60 n=200, >60 n=305. Only age group 51-60 has consistent number with the author’s stated sample size. Other groups have 3 to 8 more people compare to author's number. 
 
+### FHP Size Data
+
 ```{r}
 mtp_data %>% 
 drop_na(fhp_size_mm) %>% 
@@ -290,7 +288,9 @@ group_by(sex) %>%
 summarise(mean = mean(fhp_size_mm), sd = sd(fhp_size_mm))
 ```
 
-When not replacing the missing value with 0, the mean and standard deviation FHP in the male cases examined is 28.5 ± 14.7, , while that for the female cases was 23.6 ± 10.6 mm, whcih is consistent with author's calculation if we round the numbers. 
+When not replacing the missing value with 0, the mean and standard deviation FHP in the male cases examined is 28.5 ± 14.7, while that for the female cases was 23.6 ± 10.6 mm, which is consistant with author's calculation if we round the numbers. 
+
+### Prevalence of EEOP
 
 ```{r}
 eeop = 
@@ -302,6 +302,8 @@ eeop / (nrow(mtp_data) - 1) * 100
 ```
 
 EEOP is the ones with EOP exceeded 10mm in size. I used `eop_size_mm` to calculate prevalence of EEOP to be `r eeop / (nrow(mtp_data) - 1) * 100`% of the study population. This is very differnt from author's data. 
+
+### FHP Among 60+ Age Group
 
 ```{r}
 fhp_percent = 
